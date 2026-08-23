@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const userModel = require("./userModel");
+// const userModel = require("./userModel");
 
 const jobSchema = new mongoose.Schema({
 
@@ -35,7 +35,7 @@ const jobSchema = new mongoose.Schema({
 
     employmentType: {
         type: String,
-        enum: ["Full-time", "Part-time"],
+        enum: ["Full-time", "Part-time", "internship", "contract"],
         required: true
     },
 
@@ -44,14 +44,14 @@ const jobSchema = new mongoose.Schema({
         default: "active"
     },
 
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    }
+    // createdBy: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "User",
+    //     required: true
+    // }
 
 }, { timestamps: true });
 
 const jobModel = mongoose.model("Job", jobSchema);
 
-module.exports = userModel;
+module.exports = jobModel;

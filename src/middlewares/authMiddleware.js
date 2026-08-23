@@ -1,32 +1,32 @@
 const jwt = require("jsonwebtoken");
 
-
-async function authUser(req, res, next) {
-
-    const token = req.cookies.token;
-
-    if (!token) {
-        return res.status(401).json({
-            success:false,
-            message: "Unauthorized"
-         })
-    }
-
+const authUser = async (req, res, next) => {
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        const authHeader = req.headers.authorization;
 
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        const token = authHeader.split(" ")[1];
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         req.user = decoded;
 
-        next()
-    }
-    catch (err) {
-        console.log(err);
-        return res.status(401).json({
-            success:false,
-             message: "Unauthorized"
-            })
-    }
-}
+        next();
 
-module.exports = {authUser}
+    } catch (error) {
+        console.log(error);
+
+        return res.status(401).json({
+            success: false,
+            message: "Invalid or expired token"
+        });
+    }
+};
+
+module.exports = { authUser };
