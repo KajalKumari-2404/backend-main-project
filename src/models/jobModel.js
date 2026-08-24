@@ -44,11 +44,11 @@ const jobSchema = new mongoose.Schema({
         default: "active"
     },
 
-    // createdBy: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "User",
-    //     required: true
-    // }
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+        required: true
+    }
 
 }, { timestamps: true });
 

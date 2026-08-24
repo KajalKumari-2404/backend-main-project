@@ -34,32 +34,130 @@ const createJobController = async (req,res) => {
 
 
 //Get all jobs
-const getAllJobsController = async (req,res) => {
-    try {
-        const jobs = await jobModel.find({})
-        // console.log(foods);
-        if(jobs.length===0) {
-            return res.status(404).send({
-                success:false,
-                message:'No job was found'
-            });
-        }
-        res.status(200).send({
-            success:true,
-            totaljobs: jobs.length,
-            jobs,
-        });
-    } catch (error){
-        // console.log("ERROR => ")
-        console.log(error)
-        res.status(500).send({
-            success:false,
-            message:'Error in get all job api',
-            error
-        })
-    }
-};
+// const getAllJobsController = async (req,res) => {
+//     try {
+        // const jobs = await jobModel.find({})
+        // // console.log(foods);
+        // if(jobs.length===0) {
+        //     return res.status(404).send({
+        //         success:false,
+        //         message:'No job was found'
+        //     });
+        // }
+//         res.status(200).send({
+//             success:true,
+//             totaljobs: jobs.length,
+//             jobs,
+//         });
+//     } catch (error){
+//         // console.log("ERROR => ")
+//         console.log(error)
+//         res.status(500).send({
+//             success:false,
+//             message:'Error in get all job api',
+//             error
+//         })
+//     }
+// };
 
+const getAllJobsController = async (req, res) => {
+    try {
+
+        const { search, title, company, location, minSalary, maxSalary, sortBy, order } = req.query;
+
+        let filter = {};
+
+        //searching
+
+        if (search) {
+            filter.$or = [
+                {
+                    title: {
+                        $regex:search,
+                        $options:"i"
+                    }
+                },
+                {
+                    company: {
+                        $regex:search,
+                        $options:'i'
+                    }
+                },
+                {
+                    location:{
+                        $regex:search,
+                        $options:"i"
+                    }
+                }
+            ]
+        }
+
+        // Title filter
+        if (title) {
+            filter.title = { $regex: title, $options: "i" };
+        }
+
+        // Company filter
+        if (company) {
+            filter.company = { $regex: company, $options: "i" };
+        }
+
+        // Location filter
+        if (location) {
+            filter.location = { $regex: location, $options: "i" };
+        }
+
+        // Salary filter
+        if (minSalary || maxSalary) {
+            filter.salary = {};
+
+            if (minSalary) {
+                filter.salary.$gte = Number(minSalary);
+            }
+
+            if (maxSalary) {
+                filter.salary.$lte = Number(maxSalary);
+            }
+        }
+
+        // Sorting
+        let sort = {};
+        if (sortBy) {
+            sort[sortBy] = order === "desc" ? -1 : 1;
+        }
+
+        const jobs = await jobModel.find(filter).sort(sort);
+
+
+        // const jobs = await jobModel.find(filter);
+
+        // if (jobs.length === 0) {
+        //     return res.status(404).send({
+        //         success: false,
+        //         message: "No job found"
+        //     });
+        // }
+
+        res.status(200).send({
+            success: true,
+            totaljobs: jobs.length,
+            jobs
+        });
+
+    } catch (error) {
+
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error in get all job API",
+            error
+        });
+    }
+}
+    
+
+           
 
 // Get single job
 const getSingleJobController = async (req,res) => {

@@ -3,11 +3,15 @@ const { createJobController, getAllJobsController, getSingleJobController, updat
 const { authUser } = require('../middlewares/authMiddleware');
 const router = express.Router();
 
-router.post('/create', authUser, createJobController);
+const { authorizeRoles } = require('../middlewares/roleMiddleware');
+
+// router.post('/create', authUser, createJobController);
 router.get('/getAll', authUser, getAllJobsController);
 router.get('/get/:id', getSingleJobController);
 router.put('/update/:id', updatejobController);
 router.delete('/delete/:id', deleteJobController);
+
+router.post('/create',authUser,authorizeRoles('recruiter', 'admin'),createJobController);
 
 
 module.exports = router;
