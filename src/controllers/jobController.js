@@ -63,9 +63,16 @@ const createJobController = async (req,res) => {
 const getAllJobsController = async (req, res) => {
     try {
 
-        const { search, title, company, location, minSalary, maxSalary, sortBy, order } = req.query;
+        const { search, title, company, location, minSalary, maxSalary, sortBy, order, page = 1,
+    limit = 10} = req.query;
 
-        let filter = {};
+        // let filter = {
+        //     isDeleted: false
+        // };
+
+        let filter = {
+            isDeleted: { $ne: true }
+        };
 
         //searching
 
@@ -126,7 +133,12 @@ const getAllJobsController = async (req, res) => {
             sort[sortBy] = order === "desc" ? -1 : 1;
         }
 
-        const jobs = await jobModel.find(filter).sort(sort);
+        const skip = (Number(page) - 1) * Number(limit);
+
+        const jobs = await jobModel.find(filter).sort(sort).skip(skip)
+    .limit(Number(limit));
+
+    const totalJobs = await jobModel.countDocuments(filter);
 
 
         // const jobs = await jobModel.find(filter);
@@ -140,7 +152,11 @@ const getAllJobsController = async (req, res) => {
 
         res.status(200).send({
             success: true,
-            totaljobs: jobs.length,
+            // totaljobs: jobs.length,
+            totaljobs: totalJobs,
+            currentPage: Number(page),
+            totalPages: Math.ceil(totalJobs / Number(limit)),
+            limit: Number(limit),
             jobs
         });
 
@@ -169,7 +185,17 @@ const getSingleJobController = async (req,res) => {
                 message:'Please provide id'
             })
         }
-        const job = await jobModel.findById(jobId)
+        // const job = await jobModel.findById(jobId)
+
+        // const job = await jobModel.findOne({
+        //     _id: jobId,
+        //     isDeleted: false
+        // })
+
+        const job = await jobModel.findOne({
+            _id: jobId,
+            isDeleted: { $ne: true }
+        })
         if(!job){
             return res.status(404).send({
                 success:false,
@@ -202,9 +228,19 @@ const updatejobController = async (req,res) => {
                 message:'No job id was found'
             })
         }
-        const job = await jobModel.findById(jobId)
+        // const job = await jobModel.findById(jobId)
+
+        // const job = await jobModel.findOne({
+        //     _id: jobId,
+        //     isDeleted: false
+        // })
+
+        const job = await jobModel.findOne({
+            _id: jobId,
+            isDeleted: { $ne: true }
+        })
         if(!job){
-            return res.status(500).send({
+            return res.status(404).send({
                 success:false,
                 message:'No job found'
             })
@@ -224,6 +260,7 @@ const updatejobController = async (req,res) => {
        res.status(200).send({
         success:true,
         message:'job was updated',
+        updatejob
        });
     } catch (error) {
         console.log(error)
@@ -253,7 +290,16 @@ const deleteJobController = async (req,res) => {
                 message:'No job found with this id'
             })
         }
-        await jobModel.findByIdAndDelete(jobId);
+        // await jobModel.findByIdAndDelete(jobId);
+
+        await jobModel.findByIdAndUpdate(
+           jobId,
+    {
+        isDeleted: true,
+        deletedAt: new Date()
+    },
+       { new: true }
+   );
         res.status(200).send({
             success:true,
             message:'job deleted successfully'

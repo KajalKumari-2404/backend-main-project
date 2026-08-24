@@ -44,6 +44,16 @@ const jobSchema = new mongoose.Schema({
         default: "active"
     },
 
+    isDeleted: {
+          type: Boolean,
+          default: false
+},
+
+   deletedAt: {
+         type: Date,
+         default: null
+   },
+
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",
