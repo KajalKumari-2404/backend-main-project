@@ -47,12 +47,17 @@ const jobSchema = new mongoose.Schema({
     isDeleted: {
           type: Boolean,
           default: false
-},
+        },
 
    deletedAt: {
          type: Date,
          default: null
    },
+
+   priority: {
+    type: Number,
+    default: 5
+},
 
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,

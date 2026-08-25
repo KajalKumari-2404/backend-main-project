@@ -20,7 +20,15 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ["user", "admin", "recruiter"],
         default: "user"
-    }
+    },
+
+    // User ke dwara create ki gayi jobs
+   jobs: [
+    {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "job",
+    },
+],
 });
 
 

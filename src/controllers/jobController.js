@@ -1,10 +1,12 @@
 const jobModel = require("../models/jobModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const jobQueue = require("../queues/jobQueue");
+const emailQueue = require("../queues/emailQueue");
 
 const createJobController = async (req,res) => {
     try {
-        const { title, description, company, skills, location, salary, employmentType, status } = req.body
+        const { title, description, company, skills, location, salary, employmentType, status, priority } = req.body
 
         if (!title || !description || !company || !skills || !location || !salary || !employmentType || !status) {
             return res.status(500).send({
@@ -12,8 +14,33 @@ const createJobController = async (req,res) => {
                 message:'Please provide all fields'
             })
         }
-        const newJob = new jobModel({title,description,company, skills, location, salary, employmentType, status,createdBy: req.user._id});
+        const newJob = new jobModel({title,description,company, skills, location, salary, employmentType, status,priority: priority || 5,createdBy: req.user._id});
         await newJob.save()
+
+        
+
+        await jobQueue.add(
+            "jobCreated",
+            {
+                jobId: newJob._id,
+                title: newJob.title,
+                company: newJob.company,
+                createdBy: newJob.createdBy
+            },
+            {
+                priority: priority || 5,
+                delay: 10000
+            }
+        );
+
+        await emailQueue.add("sendJobEmail", {
+            jobId: newJob._id,
+            title: newJob.title,
+            company: newJob.company,
+            createdBy: newJob.createdBy
+        });
+      
+
         res.status(200).send({
             success:true,
             message:'job created successfully',
@@ -245,7 +272,7 @@ const updatejobController = async (req,res) => {
                 message:'No job found'
             })
         }
-        const { title,description,company, skills, location, salary, employmentType, status } = req.body
+        const { title,description,company, skills, location, salary, employmentType, status, priority} = req.body
 
         const updatejob = await jobModel.findByIdAndUpdate(jobId, { 
             title,
@@ -255,7 +282,8 @@ const updatejobController = async (req,res) => {
             location,
             salary,
             employmentType,
-            status
+            status,
+            priority
        }, {new:true});
        res.status(200).send({
         success:true,
@@ -315,5 +343,55 @@ const deleteJobController = async (req,res) => {
     }
 };
 
+// Update Job Status
+const updateJobStatusController = async (req, res) => {
+    try {
+        const jobId = req.params.id;
+        const { status } = req.body;
 
-module.exports = {createJobController, getAllJobsController, getSingleJobController, updatejobController, deleteJobController}
+        if (!jobId) {
+            return res.status(400).send({
+                success: false,
+                message: "Please provide job id"
+            });
+        }
+
+        if (!status) {
+            return res.status(400).send({
+                success: false,
+                message: "Please provide status"
+            });
+        }
+
+        const updatedJob = await jobModel.findByIdAndUpdate(
+            jobId,
+            { status },
+            { new: true }
+        );
+
+        if (!updatedJob) {
+            return res.status(404).send({
+                success: false,
+                message: "No job found with this id"
+            });
+        }
+
+        res.status(200).send({
+            success: true,
+            message: "Job status updated successfully",
+            updatedJob
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error in update job status API",
+            error
+        });
+    }
+};
+
+
+module.exports = {createJobController, getAllJobsController, getSingleJobController, updatejobController, deleteJobController, updateJobStatusController}
