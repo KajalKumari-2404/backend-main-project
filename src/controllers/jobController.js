@@ -19,7 +19,7 @@ const createJobController = async (req,res) => {
 
         
 
-        await jobQueue.add(
+         const queueJob = await jobQueue.add(
             "jobCreated",
             {
                 jobId: newJob._id,
@@ -29,7 +29,13 @@ const createJobController = async (req,res) => {
             },
             {
                 priority: priority || 5,
-                delay: 10000
+                delay: 10000,
+
+                attempts: 3,
+                backoff: {
+                    type: "fixed",
+                    delay: 5000
+                } 
             }
         );
 
@@ -45,6 +51,7 @@ const createJobController = async (req,res) => {
             success:true,
             message:'job created successfully',
             newJob,
+            queueJobId: queueJob.id
         })
 
 
@@ -393,5 +400,86 @@ const updateJobStatusController = async (req, res) => {
     }
 };
 
+// Cancel Job
+const cancelJobController = async (req, res) => {
+    try {
+        const jobId = req.params.id;
 
-module.exports = {createJobController, getAllJobsController, getSingleJobController, updatejobController, deleteJobController, updateJobStatusController}
+        if (!jobId) {
+            return res.status(400).send({
+                success: false,
+                message: "Please provide job id"
+            });
+        }
+
+        const job = await jobQueue.getJob(jobId);
+
+        if (!job) {
+            return res.status(404).send({
+                success: false,
+                message: "Job not found in queue"
+            });
+        }
+
+        await job.remove();
+
+        res.status(200).send({
+            success: true,
+            message: "Job cancelled successfully"
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error in cancel job API",
+            error
+        });
+    }
+};
+
+
+// Get Job Progress
+const getJobProgressController = async (req, res) => {
+    try {
+        const queueJobId = req.params.id;
+
+        if (!queueJobId) {
+            return res.status(400).send({
+                success: false,
+                message: "Please provide queue job id"
+            });
+        }
+
+        const job = await jobQueue.getJob(queueJobId);
+
+        if (!job) {
+            return res.status(404).send({
+                success: false,
+                message: "Job not found in queue"
+            });
+        }
+
+        const progress = await job.getState();
+
+        res.status(200).send({
+            success: true,
+            queueJobId: job.id,
+            progress: job.progress,
+            state: progress
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error in get job progress API",
+            error
+        });
+    }
+};
+
+
+module.exports = {createJobController, getAllJobsController, getSingleJobController, updatejobController, deleteJobController, updateJobStatusController,cancelJobController, getJobProgressController}

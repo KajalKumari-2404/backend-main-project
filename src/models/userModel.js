@@ -22,6 +22,27 @@ const userSchema = new mongoose.Schema({
         default: "user"
     },
 
+    resetPasswordToken: {
+    type: String,
+},
+
+resetPasswordExpire: {
+    type: Date,
+},
+
+isEmailVerified: {
+    type: Boolean,
+    default: false
+},
+
+emailVerificationToken: {
+    type: String
+},
+
+refreshToken: {
+    type: String
+},
+
     // User ke dwara create ki gayi jobs
    jobs: [
     {
