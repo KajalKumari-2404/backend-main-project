@@ -17,16 +17,17 @@ const loginLimiter = rateLimit({
 });
 
 
-router.post('/register',authController.registerUser)
+router.post('/register',authController.registerUser);
 
-router.post('/login',loginLimiter, authController.loginUser)
+router.post('/login',loginLimiter, authController.loginUser);
 
-router.post('/forgot-password', authController.forgotPassword)
+router.post('/forgot-password', authController.forgotPassword);
 
 router.post('/reset-password/:token', authController.resetPassword);
 
 router.post('/refresh-token', authController.refreshAccessToken);
 
+router.post('/logout', authController.logoutUser);
 
 
 module.exports = router;

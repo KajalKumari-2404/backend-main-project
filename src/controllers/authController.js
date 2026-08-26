@@ -4,6 +4,14 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 
+const bruteForceDelay = (attempts) => {
+    if (attempts < 3) return 0;
+    if (attempts === 3) return 2000;
+    if (attempts === 4) return 5000;
+    return 10000;
+};
+
+
 async function registerUser(req, res) {
 
     const { username, email, password } = req.body;
@@ -75,13 +83,55 @@ async function loginUser(req, res) {
         return res.status(401).json({ message: "Invalid credentials" })
     }
 
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+    return res.status(423).json({
+        success: false,
+        message: "Account is temporarily locked. Please try again later."
+    });
+}
 
-const isPasswordValid = await bcrypt.compare(password, user.password)
 
+const isPasswordValid = await bcrypt.compare(password, user.password);
 
 if (!isPasswordValid) {
-    return res.status(401).json({ message: "Invalid credentials" })
+
+    user.failedLoginAttempts += 1;
+
+const delay = bruteForceDelay(user.failedLoginAttempts);
+
+if (delay > 0) {
+    await new Promise(resolve => setTimeout(resolve, delay));
 }
+
+
+    if (user.failedLoginAttempts >= 5) {
+
+        user.lockUntil = new Date(
+            Date.now() + 15 * 60 * 1000
+        );
+
+        await user.save();
+
+        return res.status(423).json({
+            success: false,
+            message: "Account locked for 15 minutes due to multiple failed login attempts."
+        });
+    }
+
+    await user.save();
+
+    return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+        remainingAttempts: 5 - user.failedLoginAttempts
+    });
+}
+
+user.failedLoginAttempts = 0;
+user.lockUntil = null;
+await user.save();
+
+
 
 // const token = jwt.sign({
 //     id: user._id,
@@ -117,6 +167,7 @@ res.status(200).json({
     success:true,
     message: "User logged in successfully",
     token:token,
+    refreshToken: refreshToken,
     user: {
         id: user._id,
         username: user.username,
@@ -261,4 +312,38 @@ async function refreshAccessToken(req, res) {
 }
 
 
-module.exports = { registerUser, loginUser, forgotPassword, resetPassword, refreshAccessToken}
+async function logoutUser(req, res) {
+
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        return res.status(400).json({
+            success: false,
+            message: "Refresh token required"
+        });
+    }
+
+    const user = await userModel.findOne({
+        refreshToken: refreshToken
+    });
+
+    if (!user) {
+        return res.status(401).json({
+            success: false,
+            message: "Invalid refresh token"
+        });
+    }
+
+    user.refreshToken = undefined;
+
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Logout successful"
+    });
+}
+
+
+
+module.exports = { registerUser, loginUser, forgotPassword, resetPassword, refreshAccessToken, logoutUser}
