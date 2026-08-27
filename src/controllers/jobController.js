@@ -205,6 +205,36 @@ const getAllJobsController = async (req, res) => {
         });
     }
 }
+
+
+const getJobsByLocationController = async (req, res) => {
+    try {
+        const { location } = req.query;
+
+        const jobs = await jobModel.aggregate([
+            {
+                $match: {
+                    location: location
+                }
+            }
+        ]);
+
+        res.status(200).send({
+            success: true,
+            totaljobs: jobs.length,
+            jobs
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error in filtering jobs",
+            error
+        });
+    }
+};
     
 
            
@@ -482,4 +512,356 @@ const getJobProgressController = async (req, res) => {
 };
 
 
-module.exports = {createJobController, getAllJobsController, getSingleJobController, updatejobController, deleteJobController, updateJobStatusController,cancelJobController, getJobProgressController}
+const getJobsByCompanyController = async (req, res) => {
+    try {
+        const result = await jobModel.aggregate([
+            {
+                $group: {
+                    _id: "$company",
+                    totalJobs: { $sum: 1 },
+                    averageSalary: { $avg: "$salary" },
+                    maximumSalary: { $max: "$salary" },
+                    minimumSalary: { $min: "$salary" }
+                }
+            },
+
+            {
+        $sort: {
+            totalJobs: -1
+        }
+    },
+
+    {
+        $project: {
+            _id: 0,
+            company: "$_id",
+            totalJobs: 1,
+            averageSalary: 1,
+            maximumSalary: 1,
+            minimumSalary: 1
+        }
+    }
+        ]);
+
+        res.status(200).send({
+            success: true,
+            companies: result
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error in grouping jobs",
+            error
+        });
+    }
+};
+
+
+
+const getJobsWithUserController = async (req, res) => {
+    try {
+
+        const jobs = await jobModel.aggregate([
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "createdBy",
+                    foreignField: "_id",
+                    as: "creator"
+                }
+            },
+
+            {
+        $unwind: "$creator"
+    }
+
+        ]);
+
+        res.status(200).send({
+            success: true,
+            totaljobs: jobs.length,
+            jobs
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error in lookup jobs",
+            error
+        });
+    }
+};
+
+
+const getTotalJobsCountController = async (req, res) => {
+    try {
+
+        const result = await jobModel.aggregate([
+            {
+                $count: "totalJobs"
+            }
+        ]);
+
+        res.status(200).send({
+            success: true,
+            result
+        });
+
+    } catch (error) {
+
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error in counting jobs",
+            error
+        });
+    }
+};
+
+
+const getJobsFacetController = async (req, res) => {
+    try {
+
+        const result = await jobModel.aggregate([
+            {
+                $facet: {
+
+                    // Total jobs
+                    totalJobs: [
+                        {
+                            $count: "count"
+                        }
+                    ],
+
+                    // Company wise jobs
+                    companyWiseJobs: [
+                        {
+                            $group: {
+                                _id: "$company",
+                                totalJobs: {
+                                    $sum: 1
+                                }
+                            }
+                        },
+                        {
+                            $sort: {
+                                totalJobs: -1
+                            }
+                        }
+                    ],
+
+                    // Salary statistics
+                    salaryStats: [
+                        {
+                            $group: {
+                                _id: null,
+                                averageSalary: {
+                                    $avg: "$salary"
+                                },
+                                maximumSalary: {
+                                    $max: "$salary"
+                                },
+                                minimumSalary: {
+                                    $min: "$salary"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
+
+        res.status(200).send({
+            success: true,
+            result
+        });
+
+    } catch (error) {
+
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error in facet API",
+            error
+        });
+    }
+};
+
+
+const getJobsWithSkipController = async (req, res) => {
+    try {
+
+        const { page = 1, limit = 5 } = req.query;
+
+        const skip = (Number(page) - 1) * Number(limit);
+
+        const jobs = await jobModel.aggregate([
+            {
+                $skip: skip
+            },
+            {
+                $limit: Number(limit)
+            }
+        ]);
+
+        res.status(200).send({
+            success: true,
+            currentPage: Number(page),
+            limit: Number(limit),
+            skippedDocuments: skip,
+            jobs
+        });
+
+    } catch (error) {
+
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error in skip pagination API",
+            error
+        });
+    }
+};
+
+
+const getJobsWithLimitController = async (req, res) => {
+    try {
+
+        const limit = Number(req.query.limit) || 5;
+
+        const jobs = await jobModel.aggregate([
+            {
+                $limit: limit
+            }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            limit: limit,
+            totalResults: jobs.length,
+            jobs: jobs
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).json({
+            success: false,
+            message: "Error while limiting jobs",
+            error
+        });
+    }
+};
+
+
+const getJobsWithAddFieldsController = async (req, res) => {
+    try {
+
+        const jobs = await jobModel.aggregate([
+            {
+                $addFields: {
+                    salaryInLakh: {
+                        $divide: ["$salary", 100000]
+                    }
+                }
+            }
+        ]);
+
+        res.status(200).send({
+            success: true,
+            totalResults: jobs.length,
+            jobs
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error while adding calculated field",
+            error
+        });
+    }
+};
+
+
+const getJobsWithCondController = async (req, res) => {
+    try {
+
+        const jobs = await jobModel.aggregate([
+            {
+                $addFields: {
+                    salaryCategory: {
+                        $cond: {
+                            if: { $gte: ["$salary", 500000] },
+                            then: "High Salary",
+                            else: "Low Salary"
+                        }
+                    }
+                }
+            }
+        ]);
+
+        res.status(200).send({
+            success: true,
+            totalResults: jobs.length,
+            jobs
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error while applying conditional logic",
+            error
+        });
+    }
+};
+
+
+const getSalaryStatsController = async (req, res) => {
+    try {
+
+        const result = await jobModel.aggregate([
+            {
+                $group: {
+                    _id: null,
+
+                    totalSalary: { $sum: "$salary" },
+
+                    averageSalary: { $avg: "$salary" },
+
+                    minimumSalary: { $min: "$salary" },
+
+                    maximumSalary: { $max: "$salary" }
+                }
+            }
+        ]);
+
+        res.status(200).send({
+            success: true,
+            salaryStats: result[0]
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).send({
+            success: false,
+            message: "Error in salary statistics",
+            error
+        });
+    }
+};
+
+
+module.exports = {createJobController, getAllJobsController, getSingleJobController, updatejobController, deleteJobController, updateJobStatusController,cancelJobController, getJobProgressController, getJobsByLocationController, getJobsByCompanyController, getJobsWithUserController, getTotalJobsCountController, getJobsFacetController, getJobsWithSkipController, getJobsWithLimitController, getJobsWithAddFieldsController, getJobsWithCondController, getSalaryStatsController}
