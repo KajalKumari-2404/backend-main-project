@@ -203,7 +203,7 @@ async function forgotPassword(req, res) {
         message: "Password reset token generated successfully",
         resetToken: resetToken
     });
-}
+};
 
 
 async function resetPassword(req, res) {

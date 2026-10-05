@@ -6,7 +6,6 @@ dns.setServers(['8.8.8.8', '8.8.4.4']) //SRV record lookup ke liye Google DNS fo
 
 
 
-
 async function connectDB() {
 
     try{

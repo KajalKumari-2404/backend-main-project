@@ -43,5 +43,4 @@ router.delete('/cancel/:id', authUser, cancelJobController);
 
 router.post('/create', authUser, authorizeRoles('recruiter', 'admin'), createJobController);
 
-
 module.exports = router;
