@@ -759,7 +759,7 @@ const getJobsWithLimitController = async (req, res) => {
             error
         });
     }
-};
+}
 
 
 const getJobsWithAddFieldsController = async (req, res) => {

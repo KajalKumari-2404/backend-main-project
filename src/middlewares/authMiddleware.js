@@ -26,7 +26,7 @@ const authUser = async (req, res, next) => {
             success: false,
             message: "Invalid or expired token"
         });
-    }
+    };
 };
 
 module.exports = { authUser };

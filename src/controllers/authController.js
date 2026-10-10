@@ -205,7 +205,6 @@ async function forgotPassword(req, res) {
     });
 };
 
-
 async function resetPassword(req, res) {
 
     const { token } = req.params;
