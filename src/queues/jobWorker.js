@@ -98,6 +98,6 @@ worker.on("error", (err) => {
 
 console.log("Job Worker Started...");
 
-}
+};
 
 startWorker();
