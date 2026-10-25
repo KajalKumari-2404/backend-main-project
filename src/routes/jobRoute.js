@@ -32,7 +32,6 @@ router.get('/get/:id', getSingleJobController);
 
 router.get('/progress/:id', authUser, getJobProgressController);
 
-
 router.put('/update/:id', updatejobController);
 
 router.patch('/status/:id', authUser, authorizeRoles('recruiter', 'admin'), updateJobStatusController);

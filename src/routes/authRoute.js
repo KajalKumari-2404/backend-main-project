@@ -29,5 +29,4 @@ router.post('/refresh-token', authController.refreshAccessToken);
 
 router.post('/logout', authController.logoutUser);
 
-
 module.exports = router;

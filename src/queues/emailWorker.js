@@ -33,5 +33,4 @@ emailWorker.on("error", (err) => {
     console.log("Email Worker error:", err.message);
 })
 
-
 console.log("Email Worker Started...");
