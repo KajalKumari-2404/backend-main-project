@@ -237,7 +237,6 @@ async function resetPassword(req, res) {
     });
 }
 
-
 async function refreshAccessToken(req, res) {
 
     const { refreshToken } = req.body;

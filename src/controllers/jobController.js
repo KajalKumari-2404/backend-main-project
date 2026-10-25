@@ -761,7 +761,6 @@ const getJobsWithLimitController = async (req, res) => {
     }
 }
 
-
 const getJobsWithAddFieldsController = async (req, res) => {
     try {
 
