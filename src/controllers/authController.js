@@ -309,7 +309,6 @@ async function refreshAccessToken(req, res) {
     }
 }
 
-
 async function logoutUser(req, res) {
 
     const { refreshToken } = req.body;
@@ -341,7 +340,6 @@ async function logoutUser(req, res) {
         message: "Logout successful"
     });
 }
-
 
 
 module.exports = { registerUser, loginUser, forgotPassword, resetPassword, refreshAccessToken, logoutUser}

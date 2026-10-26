@@ -826,7 +826,6 @@ const getJobsWithCondController = async (req, res) => {
     }
 };
 
-
 const getSalaryStatsController = async (req, res) => {
     try {
 

@@ -5,7 +5,6 @@ const dns = require("dns") //DNS module taaki hum manually reliable DNS servers 
 dns.setServers(['8.8.8.8', '8.8.4.4']) //SRV record lookup ke liye Google DNS force karna, kyunki system ka default DNS block ho raha tha
 
 
-
 async function connectDB() {
 
     try{
