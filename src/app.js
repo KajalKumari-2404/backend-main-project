@@ -29,5 +29,4 @@ app.use('/api/v1/job', jobRoutes)
 app.use(errorMiddleware);
 
 
-
 module.exports = app;
