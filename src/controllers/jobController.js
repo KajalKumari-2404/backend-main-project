@@ -861,5 +861,4 @@ const getSalaryStatsController = async (req, res) => {
     }
 };
 
-
 module.exports = {createJobController, getAllJobsController, getSingleJobController, updatejobController, deleteJobController, updateJobStatusController,cancelJobController, getJobProgressController, getJobsByLocationController, getJobsByCompanyController, getJobsWithUserController, getTotalJobsCountController, getJobsFacetController, getJobsWithSkipController, getJobsWithLimitController, getJobsWithAddFieldsController, getJobsWithCondController, getSalaryStatsController}
