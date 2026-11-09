@@ -10,7 +10,6 @@ const jobRoutes = require('./routes/jobRoute')
 
 const errorMiddleware = require("./middlewares/errorMiddleware");
 
-
 const app = express();
 app.use(helmet());
 
